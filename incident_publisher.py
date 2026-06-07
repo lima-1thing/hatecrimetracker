@@ -22,6 +22,16 @@ def publish_incidents():
         .fetch()
     )
     for incident in incidents:
+        # Never publish self-reported incidents that haven't been approved
+        # by an admin. Unreviewed (or rejected) submissions must not reach
+        # subscribers' devices. News incidents have no review gate.
+        if incident.type == "self_report" and incident.self_report_status != "approved":
+            print(
+                "Skipping self-report incident {} with status '{}' (not approved)".format(
+                    incident.to_dict().get("id"), incident.self_report_status
+                )
+            )
+            continue
         for target, publisher in PUBLISHERS.items():
             if not incident.publish_status:
                 incident.publish_status = {}
